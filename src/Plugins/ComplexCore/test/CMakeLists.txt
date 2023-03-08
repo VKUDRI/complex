@@ -49,6 +49,7 @@ set(${PLUGIN_NAME}UnitTest_SRCS
   FindEuclideanDistMapTest.cpp
   FindFeatureCentroidsFilterTest.cpp
   FindFeaturePhasesFilterTest.cpp
+  FindNeighborhoodsTest.cpp
   FindNeighborListStatisticsTest.cpp
   FindNeighborsTest.cpp
   FindNumFeaturesTest.cpp
@@ -78,6 +79,7 @@ set(${PLUGIN_NAME}UnitTest_SRCS
   PointSampleTriangleGeometryFilterTest.cpp
   QuickSurfaceMeshFilterTest.cpp
   RawBinaryReaderTest.cpp
+  RemoveFlaggedFeaturesTest.cpp
   RemoveFlaggedVerticesTest.cpp
   RemoveMinimumSizeFeaturesTest.cpp
   RenameDataObjectTest.cpp

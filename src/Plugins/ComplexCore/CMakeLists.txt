@@ -50,6 +50,7 @@ set(FilterList
   FindEuclideanDistMapFilter
   FindFeatureCentroidsFilter
   FindFeaturePhasesFilter
+  FindNeighborhoodsFilter
   FindNeighborListStatistics
   FindNeighbors
   FindNumFeaturesFilter
@@ -78,6 +79,7 @@ set(FilterList
   PointSampleTriangleGeometryFilter
   QuickSurfaceMeshFilter
   RawBinaryReaderFilter
+  RemoveFlaggedFeaturesFilter
   RemoveFlaggedVertices
   RemoveMinimumSizeFeaturesFilter
   RenameDataObject
@@ -121,6 +123,7 @@ set(AlgorithmList
   FindBoundaryCells
   FindEuclideanDistMap
   FindFeatureCentroids
+  FindNeighborhoods
   FindSurfaceAreaToVolume
   FindTriangleGeomCentroids
   FindTriangleGeomSizes
@@ -132,6 +135,7 @@ set(AlgorithmList
   PointSampleTriangleGeometry
   QuickSurfaceMesh
   RawBinaryReader
+  RemoveFlaggedFeatures
   ReplaceElementAttributesWithNeighborValues
   ResampleImageGeom
   ScalarSegmentFeatures
