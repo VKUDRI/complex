@@ -9,7 +9,7 @@
 #include "complex/Parameters/FileSystemPathParameter.hpp"
 #include "complex/Parameters/NumericTypeParameter.hpp"
 #include "complex/UnitTest/UnitTestCommon.hpp"
-#include "complex/Utilities/Parsing/HDF5/H5FileReader.hpp"
+#include "complex/Utilities/Parsing/HDF5/Readers/FileReader.hpp"
 
 #include <catch2/catch.hpp>
 
@@ -21,7 +21,7 @@ using namespace complex;
 using namespace complex::Constants;
 using namespace complex::UnitTest;
 
-TEST_CASE("Core::AlignSectionsFeatureCentroidFilter", "[Reconstruction][AlignSectionsFeatureCentroidFilter]")
+TEST_CASE("ComplexCore::AlignSectionsFeatureCentroidFilter", "[Reconstruction][AlignSectionsFeatureCentroidFilter]")
 {
   // We are just going to generate a big number so that we can use that in the output
   // file path. This tests the creation of intermediate directories that the filter

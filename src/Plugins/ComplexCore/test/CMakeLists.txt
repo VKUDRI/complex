@@ -9,7 +9,7 @@ set(${PLUGIN_NAME}UnitTest_SRCS
   AlignGeometriesTest.cpp
   AlignSectionsFeatureCentroidTest.cpp
   AlignSectionsListTest.cpp
-  ApplyTransformationToGeometryFilterTest.cpp
+  ApplyTransformationToGeometryTest.cpp
   ApproximatePointCloudHullTest.cpp
   ArrayCalculatorTest.cpp
   CalculateArrayHistogramTest.cpp
@@ -17,6 +17,7 @@ set(${PLUGIN_NAME}UnitTest_SRCS
   CalculateTriangleAreasFilterTest.cpp
   ChangeAngleRepresentationTest.cpp
   CombineAttributeArraysTest.cpp
+  ComputeMomentInvariants2DTest.cpp
   ConditionalSetValueTest.cpp
   ConvertColorToGrayScaleTest.cpp
   ConvertDataTest.cpp
@@ -30,8 +31,8 @@ set(${PLUGIN_NAME}UnitTest_SRCS
   CreateImageGeometryTest.cpp
   CropImageGeometryTest.cpp
   CropVertexGeometryTest.cpp
-  DREAM3DFileTest.cpp
   DeleteDataTest.cpp
+  DREAM3DFileTest.cpp
   ErodeDilateBadDataTest.cpp
   ErodeDilateCoordinationNumberTest.cpp
   ErodeDilateMaskTest.cpp
@@ -58,6 +59,7 @@ set(${PLUGIN_NAME}UnitTest_SRCS
   FindSurfaceFeaturesTest.cpp
   FindTriangleGeomCentroidsTest.cpp
   FindTriangleGeomSizesTest.cpp
+  FindVertexToTriangleDistancesTest.cpp
   FindVolFractionsTest.cpp
   FindVolFractionsTest.cpp
   GenerateColorTableTest.cpp
@@ -127,7 +129,7 @@ target_include_directories(${PLUGIN_NAME}UnitTest
 # -----------------------------------------------------------------------------
 # Here we are going to setup to download and decompress the test files. In order
 # to add your own test files you will need to tar.gz the test file, compute the
-# SHA 512 Hash of the file and then upload the file to 
+# SHA 512 Hash of the file and then upload the file to
 # https://github.com/BlueQuartzSoftware/complex/releases/tag/Data_Archive.
 #
 # Go to the web site above, "edit" the release, add the filename and SHA 512 to
@@ -155,7 +157,6 @@ if(EXISTS "${DREAM3D_DATA_DIR}" AND COMPLEX_DOWNLOAD_TEST_FILES)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME 6_6_volume_fraction_feature_count.dream3d.tar.gz SHA512 e4205186dee5b97bef3fb5f265bc12f8379a68860f70de33a483680eba0433a35c9c98db56bc92c949fb215f73f5f7698f83394697e81604c8c4b8a06874943f)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME 6_6_find_boundary_cells.tar.gz SHA512 bced17620701ca6f68e8477783b169fde07f500615ee3becbd06d6f8543b832b9e01252324b6a7dfa046c0deb4355eb5647586011d2c8bbed41332b3bdfe0c7e)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME 6_6_find_biased_features.tar.gz SHA512 5a9df4c5a660768b19973b4ee3c6a59e1a997ea63823ef5931327a4857cc179d4f5dbf346130543d7ec13bee020c2caca483f1d4a730ee10a92b247cf3b0fe86)
-  download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME ASCII_Data.tar.gz SHA512 4696b919510aa400b9de6c72d0abe66e7c8be2a4effd350bfd07c4fc24d25ccb45c22e7aca5ad162d88db3e04d700b86f7d1d7e954db90ef00b31b5b46955ed4)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME Example.tar.gz SHA512 b7ea2b8bb5ecb29cb20d69e5820ebf513433c7740ce5cc9e6c1e44b539941dd3cf1a627442ace2cd430fe64437a479a62a172e6d398edf992ccdfc906ebceeba)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME GenerateColorTableTest.tar.gz SHA512 2b660e327f730f868dd5ccf0bc39509d731b53011c755eda64f21cc2f28ff5a5c0c1b933666e2bca49b46cfb05d03ad3b9380d338bc2794cd562aef4e7480274)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME PartitionGeometryTest.tar.gz SHA512 8074dbcff86ed206d9185065a56258b766eb24367b3481e8600e9b48542de23dbd715ef8f9eca1c9718ca5e05a9c48997f613bde6f4357b8bba206241caecbbd)
@@ -168,8 +169,43 @@ if(EXISTS "${DREAM3D_DATA_DIR}" AND COMPLEX_DOWNLOAD_TEST_FILES)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME export_files_test.tar.gz SHA512 c653cf435c843f676d495cf25a0329644bda7aee55ab1e5268efabd6afb6aafddb481ba12f69a3beb4882fd7b5d6a05095a748046b31add168e4c77eefa18388)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME neighbor_orientation_correlation.tar.gz SHA512 122367452174ade2f24dde7a4610bddc4f147a223722d9b30c1df9eaa2cd2bf25e1c7957aba83f3f9de79b4eadd79339b848f9530d1ebf44c69244ea5442cf85)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME so3_cubic_high_ipf_001.tar.gz SHA512 dfe4598cd4406e8b83f244302dc4fe0d4367527835c5ddd6567fe8d8ab3484d5b10ba24a8bb31db269256ec0b5272daa4340eedb5a8b397755541b32dd616b85)
-  download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME volume_graphics_test.tar.gz SHA512 94d996fbf2b8b42cd715fb3adf33548f097970211e7a26eb9ccc5b073a78014eecbd10d40fc0451ff9cc7c92e23ed21582fc082d64e1f62b3714e4d9640c975f)
   download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME csv_test_file.tar.gz SHA512 558121e0893c6af2be6f803b6a4a04c9e8297e9865a57acc3fb1fda6fb5e5c2cf44b88adc998b43aa6e54faa10e09fbb69393f5c1036c32df926337963b31cc5)
+  download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME 6_6_apply_transformation_to_geometry.tar.gz SHA512 d3510e4744de49cf98db295b6b338bd5b3199b817f7153212622292b772b7fee4f914017243845b2181d70194d618ac0582d209f96b1a0127e75b976d04f1634)
+  download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME FindSurfaceFeaturesTest.tar.gz SHA512 4a03393a60fedb1d932faef82bfca5d9da79e7adbfa61620b25ebac1a24ae554861700470d91b6f7958e8d07157ba9bedb1bdb625f0e84dfcb32df5ddb6e9911)
+  download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME volume_graphics_test.tar.gz SHA512 94d996fbf2b8b42cd715fb3adf33548f097970211e7a26eb9ccc5b073a78014eecbd10d40fc0451ff9cc7c92e23ed21582fc082d64e1f62b3714e4d9640c975f)
+  download_test_data(DREAM3D_DATA_DIR ${DREAM3D_DATA_DIR} ARCHIVE_NAME 6_6_vertex_to_triangle_distances.tar.gz SHA512 d679cde985c326a249c2b52c6e5732dcead263127a8e7f5578c4bf450730a691c840af75a0162d2bbb38eb97f9572cf72a3e1b01d3fd6c670db59619f46aeec9)
 
 endif()
+
+
+# -----------------------------------------------------------------------------
+# Include any example pipelines into the unit testing
+# -----------------------------------------------------------------------------
+include(${complex_SOURCE_DIR}/cmake/Utility.cmake)
+
+set(PREBUILT_PIPELINE_NAMES
+  # Example or other test pipelines
+  
+  # Currently Broken; Waiting on another PR. https://github.com/BlueQuartzSoftware/complex/pull/472
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/ApplyTransformation_Demo.d3dpipeline"
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/ApplyTransformation_Image.d3dpipeline"
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/ApplyTransformation_Node.d3dpipeline"
+
+  "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/ArrayCalculatorExample.d3dpipeline"
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/ExecuteProcess.d3dpipeline"
+  "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/Import_CSV_Data.d3dpipeline"
+  "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/Import_STL_Model.d3dpipeline"
+  "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/Triangle_Face_Data_Demo.d3dpipeline"
+
+  # These are workflow files
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/Import_ASCII_Data.d3dworkflow"
+
+  # These depend on files that are output from OrientationAnalysis Plugin
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/FindBiasedFeatures.d3dpipeline"
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/FindBoundaryCells.d3dpipeline"
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/Import_ASCII.d3dpipeline"
+  # "${${PLUGIN_NAME}_SOURCE_DIR}/pipelines/ReplaceElementAttributesWithNeighbor.d3dpipeline"
+
+)
+create_pipeline_tests(PLUGIN_NAME ${PLUGIN_NAME} PIPELINE_LIST ${PREBUILT_PIPELINE_NAMES})
 

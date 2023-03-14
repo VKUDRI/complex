@@ -3,6 +3,7 @@
 #include "complex/Common/TypesUtility.hpp"
 #include "complex/Filter/Actions/CreateArrayAction.hpp"
 #include "complex/Parameters/ArrayCreationParameter.hpp"
+#include "complex/Parameters/BoolParameter.hpp"
 #include "complex/Parameters/DynamicTableParameter.hpp"
 #include "complex/Parameters/NumberParameter.hpp"
 #include "complex/Parameters/NumericTypeParameter.hpp"
@@ -66,6 +67,10 @@ Parameters CreateDataArray::parameters() const
   Parameters params;
 
   params.insertSeparator(Parameters::Separator{"Input Parameters"});
+  params.insertLinkableParameter(std::make_unique<BoolParameter>(
+      k_AdvancedOptions_Key, "Set Tuple Dimensions [not required if creating inside an Attribute Matrix]",
+      "This allows the user to set the tuple dimensions directly rather than just inheriting them \n\nThis option is NOT required if you are creating the Data Array in an Attribute Matrix", true));
+
   params.insert(std::make_unique<NumericTypeParameter>(k_NumericType_Key, "Numeric Type", "Numeric Type of data to create", NumericType::int32));
   params.insert(std::make_unique<StringParameter>(k_InitilizationValue_Key, "Initialization Value", "This value will be used to fill the new array", "0"));
   params.insert(std::make_unique<UInt64Parameter>(k_NumComps_Key, "Number of Components", "Number of components", 1));
@@ -76,7 +81,10 @@ Parameters CreateDataArray::parameters() const
 
   params.insert(std::make_unique<DynamicTableParameter>(k_TupleDims_Key, "Data Array Dimensions (Slowest to Fastest Dimensions)",
                                                         "Slowest to Fastest Dimensions. Note this might be opposite displayed by an image geometry.", tableInfo));
+  params.insertSeparator(Parameters::Separator{"Created DataArray"});
   params.insert(std::make_unique<ArrayCreationParameter>(k_DataPath_Key, "Created Array", "Array storing the data", DataPath{}));
+  params.insert(std::make_unique<StringParameter>(k_DataFormat_Key, "Data Format",
+                                                  "This value will specify which data format is used by the array's data store. An empty string results in in-memory data store.", ""));
   return params;
 }
 
@@ -90,11 +98,13 @@ IFilter::UniquePointer CreateDataArray::clone() const
 IFilter::PreflightResult CreateDataArray::preflightImpl(const DataStructure& dataStructure, const Arguments& filterArgs, const MessageHandler& messageHandler,
                                                         const std::atomic_bool& shouldCancel) const
 {
+  auto useDims = filterArgs.value<bool>(k_AdvancedOptions_Key);
   auto numericType = filterArgs.value<NumericType>(k_NumericType_Key);
   auto numComponents = filterArgs.value<uint64>(k_NumComps_Key);
   auto dataArrayPath = filterArgs.value<DataPath>(k_DataPath_Key);
   auto initValue = filterArgs.value<std::string>(k_InitilizationValue_Key);
   auto tableData = filterArgs.value<DynamicTableParameter::ValueType>(k_TupleDims_Key);
+  auto dataFormat = filterArgs.value<std::string>(k_DataFormat_Key);
 
   if(initValue.empty())
   {
@@ -107,16 +117,42 @@ IFilter::PreflightResult CreateDataArray::preflightImpl(const DataStructure& dat
     return {ConvertResultTo<OutputActions>(std::move(result), {})};
   }
 
-  const auto& rowData = tableData.at(0);
-  std::vector<usize> tupleDims;
-  tupleDims.reserve(rowData.size());
-  for(auto floatValue : rowData)
+  std::vector<usize> compDims = std::vector<usize>{numComponents};
+  std::vector<usize> tupleDims = {};
+
+  auto* parentAM = dataStructure.getDataAs<AttributeMatrix>(dataArrayPath.getParent());
+  if(parentAM == nullptr)
   {
-    tupleDims.push_back(static_cast<usize>(floatValue));
+    if(!useDims)
+    {
+      return {MakeErrorResult<OutputActions>(
+          -78602, "The DataArray to be created is not within an AttributeMatrix, so the dimensions cannot be determined implicitly. Check Set Tuple Dimensions to set the dimensions")};
+    }
+    else
+    {
+      const auto& rowData = tableData.at(0);
+      tupleDims.reserve(rowData.size());
+      for(auto floatValue : rowData)
+      {
+        tupleDims.push_back(static_cast<usize>(floatValue));
+      }
+    }
+  }
+  else
+  {
+    tupleDims = parentAM->getShape();
+    if(useDims)
+    {
+      return {ConvertResultTo<OutputActions>(
+          MakeWarningVoidResult(-78603, "You checked Set Tuple Dimensions, but selected a DataPath that has an Attribute Matrix as the parent. The Attribute Matrix tuples will override your "
+                                        "custom dimensions. It is recommended to uncheck Set Tuple Dimensions for the sake of clarity."),
+          {})};
+    }
   }
 
   OutputActions actions;
-  auto action = std::make_unique<CreateArrayAction>(ConvertNumericTypeToDataType(numericType), tupleDims, std::vector<usize>{numComponents}, dataArrayPath);
+  auto action = std::make_unique<CreateArrayAction>(ConvertNumericTypeToDataType(numericType), tupleDims, compDims, dataArrayPath, dataFormat);
+
   actions.actions.push_back(std::move(action));
 
   return {std::move(actions)};
