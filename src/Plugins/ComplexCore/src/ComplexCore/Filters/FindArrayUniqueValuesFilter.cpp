@@ -52,7 +52,7 @@ Uuid FindArrayUniqueValuesFilter::uuid() const
 //------------------------------------------------------------------------------
 std::string FindArrayUniqueValuesFilter::humanName() const
 {
-  return "Find Attribute Array Statistics";
+  return "Find Attribute Array Unique Values";
 }
 
 //------------------------------------------------------------------------------
@@ -93,7 +93,6 @@ IFilter::UniquePointer FindArrayUniqueValuesFilter::clone() const
 template<typename T, typename V>
 void findUniqueValues(DataStructure data, DataPath selectedArrayPath, DataPath maskArrayPath, DataPath destinationAttributeMatrixPath, bool useMask, std::string arrayName)
 {
-  auto& maskArrayMatrix = data.getDataRefAs<AttributeMatrix>(maskArrayPath.getParent());
   auto& destinationAttributeMatrix = data.getDataRefAs<AttributeMatrix>(destinationAttributeMatrixPath);
   T& selectedArray = data.getDataRefAs<T>(selectedArrayPath);
   T& destinationArray = data.getDataRefAs<T>(destinationAttributeMatrixPath.createChildPath(arrayName));
@@ -101,13 +100,32 @@ void findUniqueValues(DataStructure data, DataPath selectedArrayPath, DataPath m
 
   for(int i = 0; i < selectedArray.getSize(); i++)
   {
-    if(uniqueValuesMap.find(selectedArray[i]) != uniqueValuesMap.end())
+    if(!useMask)
     {
-      uniqueValuesMap[selectedArray[i]] = uniqueValuesMap[selectedArray[i]]++;
+      if(uniqueValuesMap.find(selectedArray[i]) != uniqueValuesMap.end())
+      {
+        uniqueValuesMap[selectedArray[i]] = uniqueValuesMap[selectedArray[i]]++;
+      }
+      else
+      {
+        uniqueValuesMap[selectedArray[i]] = 1;
+      }
     }
-    else
+    else if(useMask)
     {
-      uniqueValuesMap.insert(selectedArray[i], 1);
+      BoolArray& maskArray = data.getDataRefAs<BoolArray>(maskArrayPath);
+
+      if(maskArray[i])
+      {
+        if(uniqueValuesMap.find(selectedArray[i]) != uniqueValuesMap.end())
+        {
+          uniqueValuesMap[selectedArray[i]] = uniqueValuesMap[selectedArray[i]]++;
+        }
+        else
+        {
+          uniqueValuesMap[selectedArray[i]] = 1;
+        }
+      }
     }
   }
 
@@ -186,11 +204,8 @@ IFilter::PreflightResult FindArrayUniqueValuesFilter::preflightImpl(const DataSt
   Result<OutputActions> resultOutputActions;
   std::vector<PreflightValue> preflightUpdatedValues;
 
-  std::vector<DataPath> inputDataArrayPaths;
-
-  const auto* selectedArray = dataStructure.getDataAs<IDataArray>(pSelectedArrayPathValue);
-  std::vector<usize> tDims = selectedArray->getTupleShape();
-  std::vector<usize> compDims = selectedArray->getComponentShape();
+  std::vector<usize> tDims = {1};
+  std::vector<usize> compDims = {1};
 
   const auto* inputArrayPtr = dataStructure.getDataAs<IDataArray>(pSelectedArrayPathValue);
 
@@ -198,8 +213,6 @@ IFilter::PreflightResult FindArrayUniqueValuesFilter::preflightImpl(const DataSt
   {
     return {MakeErrorResult<OutputActions>(-57202, fmt::format("Could not find selected input array at path '{}' ", pSelectedArrayPathValue.toString())), {}};
   }
-
-  inputDataArrayPaths.push_back(pSelectedArrayPathValue);
 
   if(inputArrayPtr->getNumberOfComponents() != 1)
   {
@@ -217,17 +230,12 @@ IFilter::PreflightResult FindArrayUniqueValuesFilter::preflightImpl(const DataSt
     {
       return {MakeErrorResult<OutputActions>(-57207, fmt::format("Mask array must be of type Boolean or UInt8")), {}};
     }
-    inputDataArrayPaths.push_back(pMaskArrayPathValue);
   }
 
-  if(!dataStructure.validateNumberOfTuples(inputDataArrayPaths))
-  {
-    return {nonstd::make_unexpected(std::vector<Error>{Error{-57209, "Input arrays do not have matching tuple counts."}})};
-  }
+  auto createMatrix = std::make_unique<CreateAttributeMatrixAction>(pDestinationAttributeMatrixValue, tDims);
+  resultOutputActions.value().actions.push_back(std::move(createMatrix));
 
-  //resultOutputActions.value().actions = createCompatibleArrays(dataStructure, filterArgs, numBins, tupleDims).actions;
-
-  DataPath path = pDestinationAttributeMatrixValue.createChildPath("UniqueValues");
+  DataPath path = pDestinationAttributeMatrixValue.createChildPath("Unique Values");
   auto createArray = std::make_unique<CreateArrayAction>(DataType::int32, tDims, compDims, path);
   resultOutputActions.value().actions.push_back(std::move(createArray));
 
@@ -244,6 +252,7 @@ Result<> FindArrayUniqueValuesFilter::executeImpl(DataStructure& dataStructure, 
   DataPath maskArrayPath = filterArgs.value<DataPath>(k_MaskArrayPath_Key);
   DataPath destinationAttributeMatrix = filterArgs.value<DataPath>(k_DestinationAttributeMatrix_Key);
 
+  findArrayType(dataStructure, selectedArrayPath, maskArrayPath, destinationAttributeMatrix, useMask, "Unique Values", messageHandler);
   return {};
 }
 } // namespace complex

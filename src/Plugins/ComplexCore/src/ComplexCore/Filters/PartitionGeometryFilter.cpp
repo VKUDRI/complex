@@ -151,6 +151,9 @@ Result<PartitionGeometry::PSGeomInfo> GeneratePartitioningSchemeInfo(const Geom&
     }
 
     Result<FloatVec3> pLengthResult = CalculatePartitionLengthsByPartitionCount(geometry, numOfPartitionsPerAxisValue);
+    pLengthResult.value()[0] *= 1.00000001;
+    pLengthResult.value()[1] *= 1.00000001;
+    pLengthResult.value()[2] *= 1.00000001;
     if(originResult.valid() && pLengthResult.valid())
     {
       psGeomMetadata.geometryDims = {static_cast<usize>(pNumberOfPartitionsPerAxisValue[0]), static_cast<usize>(pNumberOfPartitionsPerAxisValue[1]),
